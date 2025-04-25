@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>HangMan</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			text-align: center;
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+			display: flex;
+			flex-direction: column;
+			background-color: #17212b;
+			color: white;
+			overflow: hidden;
+			position: fixed;
+		}
+		#game-container {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-start;
+			box-sizing: border-box;
+			padding: 0px 20px;
+		}
+		#word {
+			font-size: 2em;
+			letter-spacing: 5px;
+			margin: 10px 0 5px;
+			min-height: 1.5em;
+		}
+		#hangman-image {
+			height: 150px;
+			margin: 10px auto;
+			background-size: contain;
+			background-repeat: no-repeat;
+			background-position: center;
+			width: 150px;
+		}
+		#letters {
+			margin: 5px 0 10px;
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 5px;
+			max-width: 600px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+		button {
+			margin: 0;
+			padding: 8px 12px;
+			font-size: 1em;
+			min-width: 40px;
+			background-color: #2c3e50;
+			color: white;
+			border: 1px solid #34495e;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: background-color 0.3s;
+		}
+		button:hover {
+			background-color: #34495e;
+		}
+		#controls {
+			margin: 0px 0 20px;
+		}
+		#controls button {
+			padding: 10px 20px;
+			font-size: 1.1em;
+			background-color: #3498db;
+			border: none;
+		}
+		#controls button:hover {
+			background-color: #2980b9;
+		}
+		#message {
+			min-height: 1.5em;
+			margin: 10px 0;
+			font-size: 1.2em;
+			font-weight: bold;
+			color: white;
+		}
+		.menu-button {
+			position: absolute; 
+			top: 20px;
+			left: 20px;
+			width: 50px;
+			height: 50px; 
+			text-align: center; 
+			border: none;
+			border-radius: 50%;
+			color: white;
+			text-decoration: none;
+			line-height: 50px; 
+			background-image: url("https://w7.pngwing.com/pngs/14/584/png-transparent-arrow-back-before-circle-direction-left-leftside-navigation-next-to-small-arrow-inside-a-circle-icon.png");
+			background-size: cover;
+			z-index: 100;
+		}
+		h1 {
+			margin: 15px 0 10px;
+			color: white;
+		}
+		.stats {
+			font-size: 1.2em;
+			margin-bottom: 10px;
+		}
+	</style>
+</head>
+<body>
+	<a href="https://kelderius.github.io/Main-Menu5/" class="menu-button"></a>
+	<div id="game-container">
+		<h1>Виселица</h1>
+		<div class="stats">Побед: <span id="wins">0</span></div>
+		<div id="hangman-image"></div>
+		<div id="word"></div>
+		<div id="letters"></div>
+		<div id="message"></div>
+		<div id="controls">
+			<button onclick="startGame()">Новая игра</button>
+		</div>
+	</div>
+
+	<script>
+		// Слова по категориям
+		const wordCategories = {
+			fruitsVeggies: [
+				"яблоко", "банан", "апельсин", "груша", "виноград",
+				"морковь", "помидор", "огурец", "картофель", "капуста"
+			],
+			sportsHobbies: [
+				"футбол", "плавание", "шахматы", "танцы", "бег",
+				"бокс", "теннис", "рисование", "пение", "йога"
+			],
+			schoolSubjects: [
+				"математика", "русский", "литература", "история", "география",
+				"физика", "химия", "биология", "музыка", "физкультура"
+			],
+			transport: [
+				"автобус", "трамвай", "метро", "такси", "велосипед",
+				"самолет", "поезд", "машина", "мотоцикл", "самокат"
+			],
+			pet: [
+				"собака", "кот", "крыса", "рыбка", "змея",
+				"свинья", "козёл", "курица", "корова", "баран"
+			],
+			professions: [
+				"врач", "учитель", "повар", "шофёр", "пилот",
+				"продавец", "полицейский", "парикмахер", "фермер", "художник"
+			],
+			household: [
+				"стол", "стул", "лампа", "чашка", "зеркало",
+				"кровать", "телевизор", "холодильник", "подушка", "полотенце"
+			],
+			nature: [
+				"река", "гора", "солнце", "дождь", "лес",
+				"цветок", "камень", "ветер", "луна", "трава"
+			],
+			clothing: [
+				"рубашка", "шапка", "платье", "брюки", "куртка",
+				"носки", "кроссовки", "юбка", "перчатки", "шарф"
+			],
+			sweets: [
+				"торт", "шоколад", "мороженое", "пирожное", "конфета",
+				"варенье", "печенье", "пончик", "зефир", "мармелад"
+			],
+			bodyParts: [
+				"голова", "рука", "нога", "глаз", "нос",
+				"рот", "ухо", "палец", "спина", "живот"
+			]
+		};
+
+		// Все слова в одном массиве
+		const allWords = [
+			...wordCategories.fruitsVeggies,
+			...wordCategories.sportsHobbies,
+			...wordCategories.schoolSubjects,
+			...wordCategories.transport,
+			...wordCategories.pet,
+			...wordCategories.professions,
+			...wordCategories.household,
+			...wordCategories.nature,
+			...wordCategories.clothing,
+			...wordCategories.sweets,
+			...wordCategories.bodyParts
+		];
+
+		// URL картинок для разных стадий
+		const hangmanImages = [
+			"https://i.ibb.co/272ZCV45/IMG-7514.jpg", // 0 ошибок
+			"https://i.ibb.co/Zz1YZtpr/IMG-7513.jpg", // 1 ошибка
+			"https://i.ibb.co/Y48Wsqg8/IMG-7515.jpg", // 2 ошибки
+			"https://i.ibb.co/QFPzPrdp/IMG-7516.jpg", // 3 ошибки
+			"https://i.ibb.co/hxt7T3h4/IMG-7517.jpg", // 4 ошибки
+			"https://i.ibb.co/TMyKy6Qc/IMG-7518.jpg", // 5 ошибок
+			"https://i.ibb.co/jdjC6xd/IMG-7519.jpg"  // 6 ошибок (проигрыш)
+		];
+
+		let word = "";
+		let guessed = [];
+		let mistakes = 0;
+		const maxMistakes = 6;
+		let wins = localStorage.getItem('hangmanWins') ? parseInt(localStorage.getItem('hangmanWins')) : 0;
+
+		function updateWins() {
+			document.getElementById('wins').textContent = wins;
+			localStorage.setItem('hangmanWins', wins);
+		}
+
+		function startGame() {
+			// Очищаем предыдущее состояние
+			document.getElementById("hangman-image").style.backgroundImage = "none";
+			document.getElementById("word").textContent = "";
+			document.getElementById("letters").innerHTML = "";
+			document.getElementById("message").textContent = "";
+			
+			// Начинаем новую игру
+			word = allWords[Math.floor(Math.random() * allWords.length)];
+			guessed = Array(word.length).fill("_");
+			mistakes = 0;
+			updateDisplay();
+			updateWins();
+		}
+
+		function updateDisplay() {
+			// Обновляем картинку
+			const hangmanImg = document.getElementById("hangman-image");
+			if (hangmanImages[mistakes]) {
+				hangmanImg.style.backgroundImage = `url('${hangmanImages[mistakes]}')`;
+			}
+			
+			document.getElementById("word").textContent = guessed.join(" ");
+			
+			if (guessed.join("") === word) {
+				wins++;
+				updateWins();
+				document.getElementById("message").textContent = "Угадано! Слово: " + word;
+				document.getElementById("letters").innerHTML = "";
+				return;
+			}
+			
+			if (mistakes >= maxMistakes) {
+				document.getElementById("message").textContent = `Игра окончена! Слово: ${word}`;
+				document.getElementById("letters").innerHTML = "";
+				return;
+			}
+			
+			let lettersHTML = "";
+			for (let i = 0; i < russianAlphabet.length; i++) {
+				const letter = russianAlphabet[i];
+				lettersHTML += `<button onclick="guessLetter('${letter}')">${letter}</button>`;
+			}
+			document.getElementById("letters").innerHTML = lettersHTML;
+		}
+
+		function guessLetter(letter) {
+			if (word.includes(letter)) {
+				for (let i = 0; i < word.length; i++) {
+					if (word[i] === letter) {
+						guessed[i] = letter;
+					}
+				}
+			} else {
+				mistakes++;
+			}
+			updateDisplay();
+		}
+
+		const russianAlphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+
+		// Начинаем игру при загрузке страницы
+		window.onload = function() {
+			updateWins();
+			startGame();
+		};
+	</script>
+</body>
+</html>
